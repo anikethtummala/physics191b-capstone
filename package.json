@@ -10,7 +10,7 @@
     "dev": "npm run dev --workspace apps/web",
     "build": "npm run build --workspace apps/web",
     "preview": "npm run preview --workspace apps/web",
-    "api": ".venv/bin/uvicorn app.main:app --app-dir services/api --reload --host 127.0.0.1 --port 8000",
+    "api": ".venv/bin/uvicorn app.main:app --app-dir services/api --host 127.0.0.1 --port 8000",
     "test:web": "npm run test --workspace apps/web",
     "test:api": ".venv/bin/pytest services/api/tests"
   }

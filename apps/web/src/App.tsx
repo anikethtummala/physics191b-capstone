@@ -163,7 +163,7 @@ function App() {
           transition={{ duration: 0.35 }}
         >
           <div>
-            <p className="eyebrow">Rotated surface code memory</p>
+            <p className="eyebrow">Deterministic checks, probabilistic decoding</p>
             <h1>Decoder benchmark</h1>
           </div>
           <div className="status-row">
@@ -207,12 +207,16 @@ function App() {
             </div>
             <div className="sample-stats">
               <span>{sample?.events.length ?? 0} detections</span>
-              <span>{sample?.matches.length ?? 0} MWPM pairs</span>
+              <span>{sample?.matches.length ?? 0} decoder pairs</span>
               <span>{sample?.logical_observable_flip ? "logical flip" : "logical stable"}</span>
               <span>
                 {sample ? (sample.using_fallback ? "visual fallback" : "stim sample") : "loading"}
               </span>
             </div>
+            <p className="quiet-text">
+              Stabilizer extraction is fixed by the circuit. The decoder operates on the
+              measured syndrome and predicts the logical-frame update.
+            </p>
             {sample?.error && <p className="quiet-text">{sample.error}</p>}
           </div>
         </div>

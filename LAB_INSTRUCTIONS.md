@@ -46,6 +46,11 @@ http://127.0.0.1:8000
 - Click `New sample` to draw a fresh syndrome frame.
 - Click `Run benchmark` to start an interactive sweep.
 
+The stabilizer measurement circuit itself is deterministic: for a chosen distance,
+basis, and number of rounds, the same checks are scheduled each time. Noise changes
+the measured syndrome. The decoder is the part being benchmarked; it receives the
+syndrome and predicts the logical-frame correction.
+
 ## 3. Decoder Implementation Status
 
 `MWPM` is implemented already. It uses Stim to generate and sample rotated surface-code circuits, then uses PyMatching to decode the detector events and calculate logical error rate, runtime, and memory use.
@@ -120,6 +125,7 @@ curl http://127.0.0.1:8000/api/benchmarks/YOUR_JOB_ID
 ## 7. Troubleshooting
 
 - If the web app cannot reach the API, confirm `npm run api` is still running on port `8000`.
+- If `Run benchmark` stays stuck without any rows appearing, stop and restart the API, then refresh the browser. The benchmark endpoint should now return a job immediately and stream progress through polling.
 - If `quantum_stack` is false in `/api/health`, reinstall the Python dependencies:
 
 ```bash
