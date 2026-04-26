@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 
+from .metrics import CONFIDENCE_LEVEL, CONFIDENCE_METHOD, wilson_interval
 from .models import BenchmarkResult, DecoderName
 
 
@@ -47,6 +48,7 @@ class Decoder(ABC):
             predictions = predictions.reshape((-1, 1))
         logical_misses = np.any(predictions != observable_flips, axis=1)
         logical_errors = int(np.count_nonzero(logical_misses))
+        ci_low, ci_high = wilson_interval(logical_errors, shots)
         return BenchmarkResult(
             decoder=self.name,
             distance=distance,
@@ -56,6 +58,10 @@ class Decoder(ABC):
             shots=shots,
             status="complete",
             logical_error_rate=logical_errors / shots,
+            logical_error_rate_ci_low=ci_low,
+            logical_error_rate_ci_high=ci_high,
+            confidence_level=CONFIDENCE_LEVEL,
+            confidence_method=CONFIDENCE_METHOD,
             logical_errors=logical_errors,
             runtime_ms=elapsed_ms,
             runtime_us_per_shot=(elapsed_ms * 1000) / shots,

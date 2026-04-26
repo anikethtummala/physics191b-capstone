@@ -13,6 +13,8 @@ describe("buildBenchmarkRequest", () => {
     });
 
     expect(request.distances).toEqual([3, 5, 7]);
+    expect(request.suite_id).toBe("surface-code-memory-v1");
+    expect(request.suite_version).toBe("2026.04");
     expect(request.rounds).toBeNull();
     expect(request.noise.p).toBe(0.002);
     expect(request.decoders).toEqual(["transformer", "mwpm"]);

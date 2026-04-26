@@ -2,9 +2,11 @@ import type {
   Basis,
   BenchmarkJob,
   BenchmarkRequest,
+  BenchmarkSubmissionBundle,
   HealthResponse,
   LayoutResponse,
-  SampleResponse
+  SampleResponse,
+  SubmissionValidationResponse
 } from "./types/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -42,6 +44,19 @@ export async function startBenchmark(payload: BenchmarkRequest): Promise<string>
 
 export function fetchBenchmark(jobId: string): Promise<BenchmarkJob> {
   return request<BenchmarkJob>(`/api/benchmarks/${jobId}`);
+}
+
+export function fetchBenchmarkSubmission(jobId: string): Promise<BenchmarkSubmissionBundle> {
+  return request<BenchmarkSubmissionBundle>(`/api/benchmarks/${jobId}/submission`);
+}
+
+export function validateSubmission(
+  payload: BenchmarkSubmissionBundle
+): Promise<SubmissionValidationResponse> {
+  return request<SubmissionValidationResponse>("/api/submissions/validate", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 }
 
 export function fetchSample(payload: {

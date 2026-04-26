@@ -1,26 +1,30 @@
 from __future__ import annotations
 
 from threading import Thread
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .benchmarks import create_job, get_job, run_job
+from .benchmarks import build_submission, create_job, get_job, run_job, validate_submission_payload
 from .dependencies import missing_quantum_dependencies
 from .layout import build_rotated_layout
 from .models import (
+    API_VERSION,
     Basis,
     BenchmarkJobResponse,
     BenchmarkRequest,
     BenchmarkStartResponse,
+    BenchmarkSubmissionBundle,
     LayoutResponse,
     SampleRequest,
     SampleResponse,
+    SubmissionValidationResponse,
 )
 from .simulator import sample_syndrome
 
 
-app = FastAPI(title="Surface Code Benchmark API", version="0.1.0")
+app = FastAPI(title="Surface Code Benchmark API", version=API_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,6 +57,19 @@ def read_benchmark(job_id: str) -> BenchmarkJobResponse:
     if job is None:
         raise HTTPException(status_code=404, detail="Benchmark job not found.")
     return job.response()
+
+
+@app.get("/api/benchmarks/{job_id}/submission", response_model=BenchmarkSubmissionBundle)
+def export_benchmark_submission(job_id: str) -> BenchmarkSubmissionBundle:
+    job = get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Benchmark job not found.")
+    return build_submission(job)
+
+
+@app.post("/api/submissions/validate", response_model=SubmissionValidationResponse)
+def validate_submission(payload: dict[str, Any]) -> SubmissionValidationResponse:
+    return validate_submission_payload(payload)
 
 
 @app.get("/api/layout", response_model=LayoutResponse)

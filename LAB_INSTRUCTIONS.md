@@ -36,14 +36,15 @@ http://127.0.0.1:8000
 
 - Choose `memory X` or `memory Z` in the Code section.
 - Select benchmark distances with `d=3`, `d=5`, and `d=7`.
-- Use Preview distance to change the lattice shown in the main panel.
 - Adjust `Depolarizing p` to set the circuit-level noise rate.
+  - `p <= 0.005` is the intended below-threshold comparison band for this first lab.
+  - Around `p=0.005..0.010`, curves may flatten or cross.
+  - Above roughly `p=0.010`, this becomes a stress test where larger distance can look worse.
 - Set `Shots` for the number of samples per distance.
 - Set `Seed` for reproducible runs.
 - Toggle decoders:
   - `MWPM` runs the real PyMatching baseline.
   - `CNN`, `GNN`, and `Transformer` are benchmark interfaces only in this version. They report checkpoint-required until trained model inference code and compatible model files are added.
-- Click `New sample` to draw a fresh syndrome frame.
 - Click `Run benchmark` to start an interactive sweep.
 
 The stabilizer measurement circuit itself is deterministic: for a chosen distance,
@@ -61,9 +62,10 @@ Importing a pre-trained model is not enough by itself unless the model matches a
 
 ## 4. Read The Output
 
-- The lattice panel shows data qubits, stabilizer checks, active syndrome detections, and MWPM match lines.
 - The Decoder status panel shows whether each decoder completed, needs a checkpoint, or hit an error.
 - The Distance sweep chart plots logical error rate against code distance for completed decoders.
+- The chart shows `p`, requested shots, and the rounds policy. By default, `rounds = d`, so a larger code distance also means a longer noisy memory experiment.
+- Chart error bars are approximate 95% binomial confidence intervals; increase shots if curves are noisy or close together.
 - The Measurements table lists logical error rate, runtime per shot, memory use, and status per decoder/distance row.
 
 ## 5. Run Checks
@@ -93,6 +95,9 @@ Health check:
 ```bash
 curl http://127.0.0.1:8000/api/health
 ```
+
+The main UI is benchmark-first and no longer shows the lattice preview. The API
+still exposes layout and single-sample syndrome endpoints for debugging.
 
 Fetch a Surface-17 layout:
 

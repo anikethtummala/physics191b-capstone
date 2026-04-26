@@ -7,6 +7,10 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 Basis = Literal["x", "z"]
+API_VERSION = "0.1.0"
+BENCHMARK_SUITE_ID = "surface-code-memory-v1"
+BENCHMARK_SUITE_VERSION = "2026.04"
+SUBMISSION_SCHEMA_VERSION = "1.0"
 
 
 class DecoderName(str, Enum):
@@ -49,6 +53,8 @@ class NoiseSettings(BaseModel):
 
 
 class BenchmarkRequest(BaseModel):
+    suite_id: str = BENCHMARK_SUITE_ID
+    suite_version: str = BENCHMARK_SUITE_VERSION
     distances: list[int] = Field(default_factory=lambda: [3, 5, 7])
     rounds: int | None = Field(default=None, ge=1, le=25)
     basis: Basis = "x"
@@ -84,13 +90,26 @@ class BenchmarkStartResponse(BaseModel):
 
 class BenchmarkResult(BaseModel):
     decoder: DecoderName
+    suite_id: str = BENCHMARK_SUITE_ID
+    suite_version: str = BENCHMARK_SUITE_VERSION
+    suite_compliant: bool = False
     distance: int
     rounds: int
     basis: Basis
     noise_p: float
     shots: int
+    case_id: str | None = None
+    sample_seed: int | None = None
+    trace_id: str | None = None
+    circuit_sha256: str | None = None
+    detection_events_sha256: str | None = None
+    observable_flips_sha256: str | None = None
     status: Literal["complete", "checkpoint_required", "dependency_missing", "error"]
     logical_error_rate: float | None = None
+    logical_error_rate_ci_low: float | None = None
+    logical_error_rate_ci_high: float | None = None
+    confidence_level: float | None = None
+    confidence_method: str | None = None
     logical_errors: int | None = None
     runtime_ms: float | None = None
     runtime_us_per_shot: float | None = None
@@ -99,11 +118,64 @@ class BenchmarkResult(BaseModel):
     error: str | None = None
 
 
+class RuntimeEnvironment(BaseModel):
+    api_version: str = API_VERSION
+    python: str
+    platform: str
+    platform_release: str
+    machine: str
+    processor: str
+    cpu_count: int | None = None
+    dependencies: dict[str, str | None] = Field(default_factory=dict)
+
+
+class EncodedTraceArray(BaseModel):
+    dtype: str
+    shape: list[int]
+    data_b64: str
+
+
+class TraceArtifact(BaseModel):
+    case_id: str
+    sample_seed: int | None = None
+    circuit_sha256: str
+    detection_events_sha256: str
+    observable_flips_sha256: str
+    circuit_text: str
+    detection_events: EncodedTraceArray
+    observable_flips: EncodedTraceArray
+
+
 class BenchmarkJobResponse(BaseModel):
     job_id: str
+    suite_id: str = BENCHMARK_SUITE_ID
+    suite_version: str = BENCHMARK_SUITE_VERSION
+    suite_compliant: bool = False
+    suite_compliance_errors: list[str] = Field(default_factory=list)
+    runtime_environment: RuntimeEnvironment | None = None
     status: Literal["pending", "running", "complete", "error"]
     progress: float = Field(ge=0, le=1)
     results: list[BenchmarkResult] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class BenchmarkSubmissionBundle(BaseModel):
+    schema_version: str = SUBMISSION_SCHEMA_VERSION
+    suite_id: str = BENCHMARK_SUITE_ID
+    suite_version: str = BENCHMARK_SUITE_VERSION
+    suite_compliant: bool = False
+    suite_compliance_errors: list[str] = Field(default_factory=list)
+    job_id: str
+    request: BenchmarkRequest
+    runtime_environment: RuntimeEnvironment
+    results: list[BenchmarkResult] = Field(default_factory=list)
+    traces: list[TraceArtifact] = Field(default_factory=list)
+
+
+class SubmissionValidationResponse(BaseModel):
+    valid: bool
+    leaderboard_eligible: bool
+    warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
 
 

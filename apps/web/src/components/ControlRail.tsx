@@ -2,7 +2,6 @@ import {
   Cpu,
   Network,
   Play,
-  RefreshCw,
   Route,
   SlidersHorizontal,
   Sparkles
@@ -17,16 +16,13 @@ interface ControlRailProps {
   health: HealthResponse | null;
   noiseP: number;
   seed: number;
-  selectedDistance: number;
   shots: number;
   onBasisChange: (basis: Basis) => void;
   onDecoderToggle: (decoder: DecoderName) => void;
   onDistanceToggle: (distance: number) => void;
   onNoiseChange: (noise: number) => void;
-  onRefreshSample: () => void;
   onRunBenchmark: () => void;
   onSeedChange: (seed: number) => void;
-  onSelectedDistanceChange: (distance: number) => void;
   onShotsChange: (shots: number) => void;
 }
 
@@ -41,6 +37,7 @@ const DECODERS: Array<{ id: DecoderName; label: string }> = [
 export function ControlRail(props: ControlRailProps) {
   const missing = props.health?.missing.join(", ") ?? "checking";
   const canRun = props.decoders.length > 0 && props.distances.length > 0 && !props.busy;
+  const noiseRegime = getNoiseRegime(props.noiseP);
 
   return (
     <aside className="control-rail">
@@ -73,25 +70,11 @@ export function ControlRail(props: ControlRailProps) {
               key={distance}
               type="button"
               onClick={() => props.onDistanceToggle(distance)}
-              onMouseEnter={() => props.onSelectedDistanceChange(distance)}
             >
               d={distance}
             </button>
           ))}
         </div>
-        <label className="field">
-          <span>Preview distance</span>
-          <select
-            value={props.selectedDistance}
-            onChange={(event) => props.onSelectedDistanceChange(Number(event.target.value))}
-          >
-            {DISTANCES.map((distance) => (
-              <option key={distance} value={distance}>
-                d={distance}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="rail-section">
@@ -111,6 +94,10 @@ export function ControlRail(props: ControlRailProps) {
           />
           <strong>{props.noiseP.toFixed(4)}</strong>
         </label>
+        <div className={`noise-regime ${noiseRegime.level}`}>
+          <strong>{noiseRegime.label}</strong>
+          <span>{noiseRegime.description}</span>
+        </div>
         <label className="field">
           <span>Shots</span>
           <input
@@ -159,10 +146,6 @@ export function ControlRail(props: ControlRailProps) {
           <Play size={16} />
           {props.busy ? "Running" : "Run benchmark"}
         </button>
-        <button className="secondary-action" type="button" onClick={props.onRefreshSample}>
-          <RefreshCw size={16} />
-          New sample
-        </button>
       </div>
 
       <div className="rail-footer">
@@ -171,4 +154,32 @@ export function ControlRail(props: ControlRailProps) {
       </div>
     </aside>
   );
+}
+
+function getNoiseRegime(noiseP: number): {
+  level: "good" | "caution" | "danger";
+  label: string;
+  description: string;
+} {
+  if (noiseP <= 0.005) {
+    return {
+      level: "good",
+      label: "Below-threshold comparison band",
+      description: "Distance should usually suppress logical error rate."
+    };
+  }
+
+  if (noiseP <= 0.01) {
+    return {
+      level: "caution",
+      label: "Near-threshold regime",
+      description: "Curves may flatten or cross; use more shots."
+    };
+  }
+
+  return {
+    level: "danger",
+    label: "Above-threshold stress test",
+    description: "Larger distance can look worse because added rounds add noise."
+  };
 }
